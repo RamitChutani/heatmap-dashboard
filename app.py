@@ -138,6 +138,9 @@ for ticker, desc in TICKER_INFO.items():
             break
 
 GROUPS = {
+    "Global Economies (USD Performance)": {ticker: TICKER_INFO[ticker] for ticker in GLOBAL_ECONOMIES_TICKERS
+    },
+    
     "India: Market Cross-Sections (INR)": {
         "^NSEI": "Nifty 50 (Large Cap)",
         "^NSMIDCP": "Nifty Midcap 100",
@@ -146,6 +149,7 @@ GROUPS = {
         "NIFTY_LQR_15.NS": "Nifty 50 Value 20",
         "MOMENTUM.NS": "Nifty 200 Momentum 30",
     },
+    
     "India: Sectoral Breakdown (INR)": {
         "^NSEBANK": "Nifty Bank",
         "^CNXIT": "Nifty IT",
@@ -157,8 +161,7 @@ GROUPS = {
         "^CNXENERGY": "Nifty Energy",
         "^CNXPSUBANK": "PSU Bank Index",
         "^CNXINFRA": "Infrastructure"
-    },
-    "Global Economies (USD Performance)": {ticker: TICKER_INFO[ticker] for ticker in GLOBAL_ECONOMIES_TICKERS}
+    }
 }
 
 # 2. DATA ENGINE
@@ -255,8 +258,7 @@ if st.button('Refresh Dashboard'):
                 d = r['dates']
                 processed_data.append({
                     'Ticker': r['Ticker'], 'Description': r['Description'],
-                    'Price': r['Price'], '1Y': r['1Y'], 'YTD': r['YTD'], 'MTD': r['MTD'], 'Week': r['Week'],
-                    'CCY': r['Currency'], 'date_1Y': d["1Y_D"], 'date_YTD': d["YTD_D"], 'date_MTD': d["MTD_D"], 'date_Wk': d["Wk_D"],
+                    'Price': r['Price'], '1Y': r['1Y'], 'YTD': r['YTD'], 'MTD': r['MTD'], 'Week': r['Week'], 'date_1Y': d["1Y_D"], 'date_YTD': d["YTD_D"], 'date_MTD': d["MTD_D"], 'date_Wk': d["Wk_D"],
                     'Rank': r.get('Rank'), 'is_error': False
                 })
         
@@ -280,17 +282,29 @@ if st.button('Refresh Dashboard'):
 
                 st.subheader(group_name)
 
-                # Heatmap Logic (Gradient)
-                styled_df = display_df.style.background_gradient(
-                    cmap='RdYlGn', axis=None, vmin=-5, vmax=5, subset=heat_cols
-                )
+# --- NEW Heatmap Logic (Auto-scaled per column, centered at 0) ---
+                styled_df = display_df.style
+                
+                for col in heat_cols:
+                    # Find the highest absolute percentage in this column to create bounds
+                    col_max = display_df[col].abs().max()
+                    
+                    # Ensure limit is valid (prevents errors if a column is empty or all 0s)
+                    limit = col_max if pd.notna(col_max) and col_max > 0 else 1
+                    
+                    # Apply gradient column-by-column with symmetric bounds (-limit to +limit)
+                    styled_df = styled_df.background_gradient(
+                        cmap='RdYlGn', 
+                        subset=[col], 
+                        vmin=-limit, 
+                        vmax=limit
+                    )
 
                 # Render with sorting and symbol formatting
                 col_config = {
                     "Price": st.column_config.NumberColumn("Price", format="%.2f"),
-                    "CCY": st.column_config.TextColumn("Currency"),
                     **{c: st.column_config.NumberColumn(c, format="%+.2f%%") for c in heat_cols},
-                    "is_error": None, "date_1Y": None, "date_YTD": None, "date_MTD": None, "date_Wk": None
+                    "is_error": None, "date_1Y": None, "date_YTD": None, "date_MTD": None, "date_Wk": None, "Rank": None
                 }
                 if group_name == "Global Economies (USD Performance)":
                     col_config["Rank"] = st.column_config.NumberColumn("Rank")
