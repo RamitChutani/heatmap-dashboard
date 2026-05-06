@@ -87,6 +87,22 @@ GLOBAL_ECONOMIES_TICKERS = [
     "EPU"
 ]
 
+import os
+
+# Define the path to your Excel file
+EXCEL_FILE_PATH = "etf_dash_May_06.xlsx"  # <-- Change this to your actual file name
+
+if os.path.exists(EXCEL_FILE_PATH):
+    # Read only the 'export' sheet from the Excel file
+    ranks_df = pd.read_excel(EXCEL_FILE_PATH, sheet_name='export')
+    
+    # Convert the columns into a dictionary: {'Indonesia': 1, 'Brazil': 2, ...}
+    # (Ensure 'Country' and 'Rank' match the exact column headers in your Excel sheet!)
+    COUNTRY_RANKS = dict(zip(ranks_df['Country'], ranks_df['Final Rank']))
+else:
+    st.error(f"Could not find {EXCEL_FILE_PATH}. Ranks will not be displayed.")
+    COUNTRY_RANKS = {}
+
 # Country rankings mapping
 COUNTRY_RANKS = {
     "Indonesia": 1,
