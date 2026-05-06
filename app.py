@@ -3,7 +3,140 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 
-# 1. THE DICTIONARY (PRESERVED)
+# 1. TICKER INFO AND GROUPS
+TICKER_INFO = {
+    "IVV": "United States (iShares Core S&P 500 ETF)",
+    "EWA": "Australia (iShares MSCI Australia ETF)",
+    "EWO": "Austria (iShares MSCI Austria ETF)",
+    "EWK": "Belgium (iShares MSCI Belgium ETF)",
+    "EWZ": "Brazil (iShares MSCI Brazil ETF)",
+    "EWC": "Canada (iShares MSCI Canada ETF)",
+    "ECH": "Chile (iShares MSCI Chile ETF)",
+    "MCHI": "China (iShares MSCI China ETF)",
+    "EIS": "Israel (iShares MSCI Israel ETF)",
+    "GXG": "Colombia (iShares MSCI Colombia ETF)",
+    "INDA": "India (iShares MSCI India ETF)",
+    "EWJ": "Japan (iShares MSCI Japan ETF)",
+    "EWM": "Malaysia (iShares MSCI Malaysia ETF)",
+    "ENZL": "New Zealand (iShares MSCI New Zealand ETF)",
+    "EPOL": "Poland (iShares MSCI Poland ETF)",
+    "EIRL": "Ireland (iShares MSCI Ireland ETF)",
+    "EWQ": "France (iShares MSCI France ETF)",
+    "EWU": "United Kingdom (iShares MSCI United Kingdom ETF)",
+    "EZA": "South Africa (iShares MSCI South Africa ETF)",
+    "EWL": "Switzerland (iShares MSCI Switzerland ETF)",
+    "EWS": "Singapore (iShares MSCI Singapore ETF)",
+    "EWT": "Taiwan (iShares MSCI Taiwan ETF)",
+    "EWP": "Spain (iShares MSCI Spain ETF)",
+    "EDEN": "Denmark (iShares MSCI Denmark ETF)",
+    "EFNL": "Finland (iShares MSCI Finland ETF)",
+    "EWG": "Germany (iShares MSCI Germany ETF)",
+    "EWI": "Italy (iShares MSCI Italy ETF)",
+    "EWW": "Mexico (iShares MSCI Mexico ETF)",
+    "GREK": "Greece (iShares MSCI Greece ETF)",
+    "EWY": "South Korea (iShares MSCI South Korea ETF)",
+    "THD": "Thailand (iShares MSCI Thailand ETF)",
+    "TUR": "Turkey (iShares MSCI Turkey ETF)",
+    "EPHE": "Philippines (iShares MSCI Philippines ETF)",
+    "EWH": "Hong Kong (iShares MSCI Hong Kong ETF)",
+    "EIDO": "Indonesia (iShares MSCI Indonesia ETF)",
+    "ENOR": "Norway (iShares MSCI Norway ETF)",
+    "EWD": "Sweden (iShares MSCI Sweden ETF)",
+    "EWN": "Netherlands (iShares MSCI Netherlands ETF)",
+    "EPU": "Peru (iShares MSCI Peru ETF)"
+}
+
+GLOBAL_ECONOMIES_TICKERS = [
+    "EIDO",
+    "EWM",
+    "EPHE",
+    "THD",
+    "EWH",
+    "MCHI",
+    "EWS",
+    "TUR",
+    "ECH",
+    "EPOL",
+    "EWQ",
+    "EWU",
+    "EWZ",
+    "EIRL",
+    "GXG",
+    "INDA",
+    "EWJ",
+    "EWA",
+    "ENZL",
+    "EWP",
+    "EWG",
+    "EDEN",
+    "EWK",
+    "EWI",
+    "EWW",
+    "GREK",
+    "EFNL",
+    "ENOR",
+    "EWY",
+    "EZA",
+    "EWL",
+    "IVV",
+    "EWT",
+    "EWO",
+    "EWD",
+    "EWC",
+    "EWN",
+    "EPU"
+]
+
+# Country rankings mapping
+COUNTRY_RANKS = {
+    "Indonesia": 1,
+    "Brazil": 2,
+    "India": 3,
+    "Philippines": 4,
+    "United Kingdom": 5,
+    "France": 6,
+    "Turkey": 7,
+    "Hong Kong": 8,
+    "Chile": 9,
+    "Japan": 10,
+    "Malaysia": 11,
+    "Poland": 12,
+    "Singapore": 13,
+    "Thailand": 14,
+    "China": 14,
+    "South Korea": 16,
+    "Mexico": 17,
+    "United States": 18,
+    "Australia": 19,
+    "Colombia": 20,
+    "Italy": 21,
+    "Spain": 22,
+    "Greece": 22,
+    "South Africa": 24,
+    "Norway": 25,
+    "Ireland": 26,
+    "New Zealand": 27,
+    "Denmark": 28,
+    "Germany": 29,
+    "Canada": 30,
+    "Belgium": 31,
+    "Finland": 32,
+    "Taiwan": 32,
+    "Sweden": 34,
+    "Peru": 35,
+    "Netherlands": 36,
+    "Switzerland": 37,
+    "Austria": 38
+}
+
+# Create ticker-to-country mapping for rank lookup
+TICKER_TO_COUNTRY = {}
+for ticker, desc in TICKER_INFO.items():
+    for country in COUNTRY_RANKS.keys():
+        if country in desc:
+            TICKER_TO_COUNTRY[ticker] = country
+            break
+
 GROUPS = {
     "India: Market Cross-Sections (INR)": {
         "^NSEI": "Nifty 50 (Large Cap)",
@@ -25,56 +158,14 @@ GROUPS = {
         "^CNXPSUBANK": "PSU Bank Index",
         "^CNXINFRA": "Infrastructure"
     },
-    "Global Economies (USD Performance)": {
-        "SPY": "USA (S&P 500)",
-        "QQQ": "USA (Nasdaq 100)",
-        "INDA": "India (MSCI India ETF)",
-        "EWJ": "Japan (MSCI Japan)",
-        "EWG": "Germany (MSCI Germany)",
-        "EWU": "United Kingdom (MSCI UK)",
-        "EWQ": "France (MSCI France)",
-        "EWA": "Australia (MSCI Australia)",
-        "EWC": "Canada (MSCI Canada)",
-        "EWI": "Italy (MSCI Italy)",
-        "EWZ": "Brazil (MSCI Brazil)",
-        "MCHI": "China (MSCI China)",
-        "EWY": "South Korea (MSCI South Korea)",
-        "EWW": "Mexico (MSCI Mexico)",
-        "EWT": "Taiwan (MSCI Taiwan)",
-        "EWP": "Spain (MSCI Spain)",
-        "EWN": "Netherlands (MSCI Netherlands)",
-        "EWS": "Singapore (MSCI Singapore)",
-        "EWD": "Sweden (MSCI Sweden)",
-        "EWL": "Switzerland (MSCI Switzerland)",
-        "EIDO": "Indonesia (MSCI Indonesia)",
-        "TUR": "Turkey (MSCI Turkey)",
-        "THD": "Thailand (MSCI Thailand)",
-        "EZA": "South Africa (MSCI South Africa)",
-        "EIS": "Israel (MSCI Israel)",
-        "GREK": "Greece (MSCI Greece)",
-        "EPOL": "Poland (MSCI Poland)",
-        "ENZL": "New Zealand (MSCI NZ)",
-        "EPU": "Peru (MSCI Peru)",
-        "EWM": "Malaysia (MSCI Malaysia)",
-        "EDEN": "Denmark (MSCI Denmark)",
-        "EFNL": "Finland (MSCI Finland)",
-        "EWK": "Belgium (MSCI Belgium)",
-        "NORW": "Norway (MSCI Norway)",
-        "EIRL": "Ireland (MSCI Ireland)",
-        "GXG": "Colombia (MSCI Colombia)",
-        "VNM": "Vietnam (MSCI Vietnam)",
-        "KSA": "Saudi Arabia (MSCI KSA)",
-        "UAE": "United Arab Emirates (MSCI UAE)",
-        "EGPT": "Egypt (MSCI Egypt)",
-        "AFK": "Africa (Broad Market)"
-    }
+    "Global Economies (USD Performance)": {ticker: TICKER_INFO[ticker] for ticker in GLOBAL_ECONOMIES_TICKERS}
 }
 
 # 2. DATA ENGINE
 @st.cache_data(ttl=3600)
 def get_performance(ticker, description, selected_date):
     try:
-        start_date = datetime(selected_date.year, 1, 1) - timedelta(days=10)
+        start_date = datetime(selected_date.year - 1, 1, 1) - timedelta(days=10)
         df = yf.download(ticker, start=start_date, end=selected_date + timedelta(days=1), 
                          interval='1d', progress=False, auto_adjust=True)
         
@@ -94,6 +185,7 @@ def get_performance(ticker, description, selected_date):
         current_price, actual_curr_date = get_safe_data(selected_date)
         price_jan, actual_jan_date = get_safe_data(datetime(selected_date.year, 1, 1))
         price_month, actual_month_date = get_safe_data(datetime(selected_date.year, selected_date.month, 1))
+        price_year, actual_year_date = get_safe_data(datetime(selected_date.year - 1, selected_date.month, selected_date.day))
         
         target_locs = df.index.get_indexer([selected_date], method='pad')
         target_idx = target_locs[0] if target_locs[0] != -1 else (len(df) - 1)
@@ -106,14 +198,36 @@ def get_performance(ticker, description, selected_date):
             'Description': description,
             'Price': float(current_price),
             'Currency': "INR" if (".NS" in ticker or "^" in ticker) else "USD",
+            '1Y': float(((current_price - price_year) / price_year) * 100),
             'YTD': float(((current_price - price_jan) / price_jan) * 100),
             'MTD': float(((current_price - price_month) / price_month) * 100),
             'Week': float(((current_price - price_week) / price_week) * 100),
-            'dates': {'YTD_D': actual_jan_date, 'MTD_D': actual_month_date, 'Wk_D': actual_week_date},
+            'dates': {'1Y_D': actual_year_date, 'YTD_D': actual_jan_date, 'MTD_D': actual_month_date, 'Wk_D': actual_week_date},
+            'Rank': TICKER_TO_COUNTRY.get(ticker) and COUNTRY_RANKS.get(TICKER_TO_COUNTRY[ticker]),
             'Error': None
         }
     except Exception as e:
         return {'Ticker': ticker, 'Description': description, 'Error': str(e)}
+
+# Fetch ticker info from yfinance
+@st.cache_data(ttl=86400)
+def get_ticker_info(ticker):
+    try:
+        info = yf.Ticker(ticker).info
+        return {
+            'longName': info.get('longName', 'N/A'),
+            'sector': info.get('sector', 'N/A'),
+            'industry': info.get('industry', 'N/A'),
+            'website': info.get('website', 'N/A'),
+            'marketCap': info.get('marketCap', 'N/A'),
+            'dividendYield': info.get('dividendYield', 'N/A'),
+            'trailingPE': info.get('trailingPE', 'N/A'),
+            'beta': info.get('beta', 'N/A'),
+            '52WeekHigh': info.get('fiftyTwoWeekHigh', 'N/A'),
+            '52WeekLow': info.get('fiftyTwoWeekLow', 'N/A'),
+        }
+    except Exception as e:
+        return {'Error': str(e)}
 
 # 3. DASHBOARD UI
 st.set_page_config(page_title="Market Heatmap", layout="wide")
@@ -135,15 +249,15 @@ if st.button('Refresh Dashboard'):
                 # Mark errors but we will filter these out later
                 processed_data.append({
                     'Ticker': r['Ticker'], 'Description': r['Description'],
-                    'Price': None, 'YTD': None, 'MTD': None, 'Week': None, 'is_error': True
+                    'Price': None, '1Y': None, 'YTD': None, 'MTD': None, 'Week': None, 'Rank': None, 'is_error': True
                 })
             else:
                 d = r['dates']
                 processed_data.append({
                     'Ticker': r['Ticker'], 'Description': r['Description'],
-                    'Price': r['Price'], 'YTD': r['YTD'], 'MTD': r['MTD'], 'Week': r['Week'],
-                    'CCY': r['Currency'], 'date_YTD': d["YTD_D"], 'date_MTD': d["MTD_D"], 'date_Wk': d["Wk_D"],
-                    'is_error': False
+                    'Price': r['Price'], '1Y': r['1Y'], 'YTD': r['YTD'], 'MTD': r['MTD'], 'Week': r['Week'],
+                    'CCY': r['Currency'], 'date_1Y': d["1Y_D"], 'date_YTD': d["YTD_D"], 'date_MTD': d["MTD_D"], 'date_Wk': d["Wk_D"],
+                    'Rank': r.get('Rank'), 'is_error': False
                 })
         
         if processed_data:
@@ -156,6 +270,7 @@ if st.button('Refresh Dashboard'):
             if not df.empty:
                 ref = df.iloc[0]
                 cols_map = {
+                    '1Y': f'1Y ({ref["date_1Y"]})',
                     'YTD': f'YTD ({ref["date_YTD"]})',
                     'MTD': f'MTD ({ref["date_MTD"]})',
                     'Week': f'Week ({ref["date_Wk"]})'
@@ -171,14 +286,18 @@ if st.button('Refresh Dashboard'):
                 )
 
                 # Render with sorting and symbol formatting
+                col_config = {
+                    "Price": st.column_config.NumberColumn("Price", format="%.2f"),
+                    "CCY": st.column_config.TextColumn("Currency"),
+                    **{c: st.column_config.NumberColumn(c, format="%+.2f%%") for c in heat_cols},
+                    "is_error": None, "date_1Y": None, "date_YTD": None, "date_MTD": None, "date_Wk": None
+                }
+                if group_name == "Global Economies (USD Performance)":
+                    col_config["Rank"] = st.column_config.NumberColumn("Rank")
+                
                 st.dataframe(
                     styled_df,
-                    column_config={
-                        "Price": st.column_config.NumberColumn("Price", format="%.2f"),
-                        "CCY": st.column_config.TextColumn("Currency"),
-                        **{c: st.column_config.NumberColumn(c, format="%+.2f%%") for c in heat_cols},
-                        "is_error": None, "date_YTD": None, "date_MTD": None, "date_Wk": None
-                    },
+                    column_config=col_config,
                     use_container_width=False,
                     width="content",
                     height=(len(display_df) * 36) + 45
