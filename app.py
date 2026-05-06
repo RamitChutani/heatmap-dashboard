@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
+import os
 
 # 1. TICKER INFO AND GROUPS
 TICKER_INFO = {
@@ -47,105 +48,22 @@ TICKER_INFO = {
 }
 
 GLOBAL_ECONOMIES_TICKERS = [
-    "EIDO",
-    "EWM",
-    "EPHE",
-    "THD",
-    "EWH",
-    "MCHI",
-    "EWS",
-    "TUR",
-    "ECH",
-    "EPOL",
-    "EWQ",
-    "EWU",
-    "EWZ",
-    "EIRL",
-    "GXG",
-    "INDA",
-    "EWJ",
-    "EWA",
-    "ENZL",
-    "EWP",
-    "EWG",
-    "EDEN",
-    "EWK",
-    "EWI",
-    "EWW",
-    "GREK",
-    "EFNL",
-    "ENOR",
-    "EWY",
-    "EZA",
-    "EWL",
-    "IVV",
-    "EWT",
-    "EWO",
-    "EWD",
-    "EWC",
-    "EWN",
-    "EPU"
+    "EIDO", "EWM", "EPHE", "THD", "EWH", "MCHI", "EWS", "TUR", "ECH", "EPOL",
+    "EWQ", "EWU", "EWZ", "EIRL", "GXG", "INDA", "EWJ", "EWA", "ENZL", "EWP",
+    "EWG", "EDEN", "EWK", "EWI", "EWW", "GREK", "EFNL", "ENOR", "EWY", "EZA",
+    "EWL", "IVV", "EWT", "EWO", "EWD", "EWC", "EWN", "EPU"
 ]
 
-import os
-
-# Define the path to your Excel file
-EXCEL_FILE_PATH = "etf_dash_May_06.xlsx"  # <-- Change this to your actual file name
-
+# Load Ranks from Excel
+EXCEL_FILE_PATH = "etf_dash_May_06.xlsx" 
 if os.path.exists(EXCEL_FILE_PATH):
-    # Read only the 'export' sheet from the Excel file
     ranks_df = pd.read_excel(EXCEL_FILE_PATH, sheet_name='export')
-    
-    # Convert the columns into a dictionary: {'Indonesia': 1, 'Brazil': 2, ...}
-    # (Ensure 'Country' and 'Rank' match the exact column headers in your Excel sheet!)
     COUNTRY_RANKS = dict(zip(ranks_df['Country'], ranks_df['Final Rank']))
 else:
     st.error(f"Could not find {EXCEL_FILE_PATH}. Ranks will not be displayed.")
     COUNTRY_RANKS = {}
 
-# # Country rankings mapping
-# COUNTRY_RANKS = {
-#     "Indonesia": 1,
-#     "Brazil": 2,
-#     "India": 3,
-#     "Philippines": 4,
-#     "United Kingdom": 5,
-#     "France": 6,
-#     "Turkey": 7,
-#     "Hong Kong": 8,
-#     "Chile": 9,
-#     "Japan": 10,
-#     "Malaysia": 11,
-#     "Poland": 12,
-#     "Singapore": 13,
-#     "Thailand": 14,
-#     "China": 14,
-#     "South Korea": 16,
-#     "Mexico": 17,
-#     "United States": 18,
-#     "Australia": 19,
-#     "Colombia": 20,
-#     "Italy": 21,
-#     "Spain": 22,
-#     "Greece": 22,
-#     "South Africa": 24,
-#     "Norway": 25,
-#     "Ireland": 26,
-#     "New Zealand": 27,
-#     "Denmark": 28,
-#     "Germany": 29,
-#     "Canada": 30,
-#     "Belgium": 31,
-#     "Finland": 32,
-#     "Taiwan": 32,
-#     "Sweden": 34,
-#     "Peru": 35,
-#     "Netherlands": 36,
-#     "Switzerland": 37,
-#     "Austria": 38
-# }
-
-# Create ticker-to-country mapping for rank lookup
+# Create ticker-to-country mapping
 TICKER_TO_COUNTRY = {}
 for ticker, desc in TICKER_INFO.items():
     for country in COUNTRY_RANKS.keys():
@@ -154,9 +72,7 @@ for ticker, desc in TICKER_INFO.items():
             break
 
 GROUPS = {
-    "Global Economies (USD Performance)": {ticker: TICKER_INFO[ticker] for ticker in GLOBAL_ECONOMIES_TICKERS
-    },
-    
+    "Global Economies (USD Performance)": {ticker: TICKER_INFO[ticker] for ticker in GLOBAL_ECONOMIES_TICKERS},
     "India: Market Cross-Sections (INR)": {
         "^NSEI": "Nifty 50 (Large Cap)",
         "^NSMIDCP": "Nifty Midcap 100",
@@ -165,18 +81,11 @@ GROUPS = {
         "NIFTY_LQR_15.NS": "Nifty 50 Value 20",
         "MOMENTUM.NS": "Nifty 200 Momentum 30",
     },
-    
     "India: Sectoral Breakdown (INR)": {
-        "^NSEBANK": "Nifty Bank",
-        "^CNXIT": "Nifty IT",
-        "^CNXAUTO": "Nifty Auto",
-        "^CNXPHARMA": "Nifty Pharma",
-        "^CNXFMCG": "Nifty FMCG",
-        "^CNXMETAL": "Nifty Metal",
-        "^CNXREALTY": "Nifty Realty",
-        "^CNXENERGY": "Nifty Energy",
-        "^CNXPSUBANK": "PSU Bank Index",
-        "^CNXINFRA": "Infrastructure"
+        "^NSEBANK": "Nifty Bank", "^CNXIT": "Nifty IT", "^CNXAUTO": "Nifty Auto",
+        "^CNXPHARMA": "Nifty Pharma", "^CNXFMCG": "Nifty FMCG", "^CNXMETAL": "Nifty Metal",
+        "^CNXREALTY": "Nifty Realty", "^CNXENERGY": "Nifty Energy", 
+        "^CNXPSUBANK": "PSU Bank Index", "^CNXINFRA": "Infrastructure"
     }
 }
 
@@ -184,7 +93,7 @@ GROUPS = {
 @st.cache_data(ttl=3600)
 def get_performance(ticker, description, selected_date):
     try:
-        start_date = datetime(selected_date.year - 1, 1, 1) - timedelta(days=10)
+        start_date = datetime(selected_date.year - 1, 1, 1) - timedelta(days=40)
         df = yf.download(ticker, start=start_date, end=selected_date + timedelta(days=1), 
                          interval='1d', progress=False, auto_adjust=True)
         
@@ -204,6 +113,7 @@ def get_performance(ticker, description, selected_date):
         current_price, actual_curr_date = get_safe_data(selected_date)
         price_jan, actual_jan_date = get_safe_data(datetime(selected_date.year, 1, 1))
         price_month, actual_month_date = get_safe_data(datetime(selected_date.year, selected_date.month, 1))
+        price_1m, actual_1m_date = get_safe_data(selected_date - timedelta(days=30))
         price_year, actual_year_date = get_safe_data(datetime(selected_date.year - 1, selected_date.month, selected_date.day))
         
         target_locs = df.index.get_indexer([selected_date], method='pad')
@@ -216,44 +126,28 @@ def get_performance(ticker, description, selected_date):
             'Ticker': ticker,
             'Description': description,
             'Price': float(current_price),
-            'Currency': "INR" if (".NS" in ticker or "^" in ticker) else "USD",
             '1Y': float(((current_price - price_year) / price_year) * 100),
             'YTD': float(((current_price - price_jan) / price_jan) * 100),
             'MTD': float(((current_price - price_month) / price_month) * 100),
+            '1M': float(((current_price - price_1m) / price_1m) * 100),
             'Week': float(((current_price - price_week) / price_week) * 100),
-            'dates': {'1Y_D': actual_year_date, 'YTD_D': actual_jan_date, 'MTD_D': actual_month_date, 'Wk_D': actual_week_date},
+            'dates': {
+                '1Y_D': actual_year_date, 'YTD_D': actual_jan_date, 
+                'MTD_D': actual_month_date, '1M_D': actual_1m_date, 'Wk_D': actual_week_date
+            },
             'Rank': TICKER_TO_COUNTRY.get(ticker) and COUNTRY_RANKS.get(TICKER_TO_COUNTRY[ticker]),
             'Error': None
         }
     except Exception as e:
         return {'Ticker': ticker, 'Description': description, 'Error': str(e)}
 
-# Fetch ticker info from yfinance
-@st.cache_data(ttl=86400)
-def get_ticker_info(ticker):
-    try:
-        info = yf.Ticker(ticker).info
-        return {
-            'longName': info.get('longName', 'N/A'),
-            'sector': info.get('sector', 'N/A'),
-            'industry': info.get('industry', 'N/A'),
-            'website': info.get('website', 'N/A'),
-            'marketCap': info.get('marketCap', 'N/A'),
-            'dividendYield': info.get('dividendYield', 'N/A'),
-            'trailingPE': info.get('trailingPE', 'N/A'),
-            'beta': info.get('beta', 'N/A'),
-            '52WeekHigh': info.get('fiftyTwoWeekHigh', 'N/A'),
-            '52WeekLow': info.get('fiftyTwoWeekLow', 'N/A'),
-        }
-    except Exception as e:
-        return {'Error': str(e)}
-
 # 3. DASHBOARD UI
 st.set_page_config(page_title="Market Heatmap", layout="wide")
 st.title("Market Performance Heatmap")
 
-yesterday = datetime.now() - timedelta(days=1)
-selected_date = st.date_input("Select 'As Of' Date:", value=yesterday, max_value=yesterday)
+# Set default to 2 days ago for Streamlit Cloud reliability
+default_date = datetime.now() - timedelta(days=2)
+selected_date = st.date_input("Select 'As Of' Date:", value=default_date, max_value=default_date)
 selected_dt = datetime.combine(selected_date, datetime.min.time())
 
 # 4. RENDER LOOP
@@ -265,24 +159,22 @@ if st.button('Refresh Dashboard'):
         for r in results:
             if r is None: continue
             if r.get('Error'):
-                # Mark errors but we will filter these out later
                 processed_data.append({
-                    'Ticker': r['Ticker'], 'Description': r['Description'],
-                    'Price': None, '1Y': None, 'YTD': None, 'MTD': None, 'Week': None, 'Rank': None, 'is_error': True
+                    'Ticker': r['Ticker'], 'Description': r['Description'], 'is_error': True
                 })
             else:
                 d = r['dates']
                 processed_data.append({
                     'Ticker': r['Ticker'], 'Description': r['Description'],
-                    'Price': r['Price'], '1Y': r['1Y'], 'YTD': r['YTD'], 'MTD': r['MTD'], 'Week': r['Week'], 'date_1Y': d["1Y_D"], 'date_YTD': d["YTD_D"], 'date_MTD': d["MTD_D"], 'date_Wk': d["Wk_D"],
+                    'Price': r['Price'], '1Y': r['1Y'], 'YTD': r['YTD'], 'MTD': r['MTD'], 
+                    '1M': r['1M'], 'Week': r['Week'],
+                    'date_1Y': d["1Y_D"], 'date_YTD': d["YTD_D"], 'date_MTD': d["MTD_D"], 
+                    'date_1M': d["1M_D"], 'date_Wk': d["Wk_D"],
                     'Rank': r.get('Rank'), 'is_error': False
                 })
         
         if processed_data:
             full_df = pd.DataFrame(processed_data).set_index('Ticker')
-            
-            # --- THE KEY CHANGE: FILTER OUT ERRORS ---
-            # This line removes any row where 'is_error' is True
             df = full_df[full_df['is_error'] == False].copy()
             
             if not df.empty:
@@ -291,6 +183,7 @@ if st.button('Refresh Dashboard'):
                     '1Y': f'1Y ({ref["date_1Y"]})',
                     'YTD': f'YTD ({ref["date_YTD"]})',
                     'MTD': f'MTD ({ref["date_MTD"]})',
+                    '1M': f'1M ({ref["date_1M"]})',
                     'Week': f'Week ({ref["date_Wk"]})'
                 }
                 display_df = df.rename(columns=cols_map)
@@ -298,53 +191,29 @@ if st.button('Refresh Dashboard'):
 
                 st.subheader(group_name)
 
-# --- NEW Logic: Red for Negative, Green for Positive (No Imports) ---
+                # Custom Red/Green Styling Logic
                 def style_performance(val, col_max):
-                    if pd.isna(val) or col_max == 0:
-                        return ''
-                    
-                    # Calculate intensity (0.0 to 1.0) based on the column's max value
+                    if pd.isna(val) or col_max == 0: return ''
                     intensity = min(abs(val) / col_max, 1.0)
-                    # Set a minimum visibility (0.1) so small numbers aren't invisible
                     alpha = 0.1 + (intensity * 0.7) 
-                    
                     if val < 0:
-                        # Soft Red for negative
                         return f'background-color: rgba(255, 75, 75, {alpha});'
                     else:
-                        # Soft Green for positive (Yellow-ish Green at low values)
                         return f'background-color: rgba(0, 128, 0, {alpha});'
 
                 styled_df = display_df.style
                 for col in heat_cols:
                     c_max = display_df[col].abs().max()
-                    # Apply the custom color function to each column
                     styled_df = styled_df.map(style_performance, col_max=c_max, subset=[col])
 
-# # --- NEW Heatmap Logic (Auto-scaled per column, centered at 0) ---
-#                 styled_df = display_df.style
-                
-#                 for col in heat_cols:
-#                     # Find the highest absolute percentage in this column to create bounds
-#                     col_max = display_df[col].abs().max()
-                    
-#                     # Ensure limit is valid (prevents errors if a column is empty or all 0s)
-#                     limit = col_max if pd.notna(col_max) and col_max > 0 else 1
-                    
-#                     # Apply gradient column-by-column with symmetric bounds (-limit to +limit)
-#                     styled_df = styled_df.background_gradient(
-#                         cmap='RdYlGn', 
-#                         subset=[col], 
-#                         vmin=-limit, 
-#                         vmax=limit
-#                     )
-
-                # Render with sorting and symbol formatting
+                # Column configuration
                 col_config = {
                     "Price": st.column_config.NumberColumn("Price", format="%.2f"),
                     **{c: st.column_config.NumberColumn(c, format="%+.2f%%") for c in heat_cols},
-                    "is_error": None, "date_1Y": None, "date_YTD": None, "date_MTD": None, "date_Wk": None, "Rank": None
+                    "is_error": None, "date_1Y": None, "date_YTD": None, 
+                    "date_MTD": None, "date_1M": None, "date_Wk": None, "Rank": None
                 }
+                
                 if group_name == "Global Economies (USD Performance)":
                     col_config["Rank"] = st.column_config.NumberColumn("Rank", format="%d")
                 
