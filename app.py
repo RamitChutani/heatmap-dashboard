@@ -346,7 +346,7 @@ if st.button('Refresh Dashboard'):
                     "is_error": None, "date_1Y": None, "date_YTD": None, "date_MTD": None, "date_Wk": None, "Rank": None
                 }
                 if group_name == "Global Economies (USD Performance)":
-                    col_config["Rank"] = st.column_config.NumberColumn("Rank")
+                    col_config["Rank"] = st.column_config.NumberColumn("Rank", format="%d")
                 
                 st.dataframe(
                     styled_df,
