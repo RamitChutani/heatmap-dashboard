@@ -103,47 +103,47 @@ else:
     st.error(f"Could not find {EXCEL_FILE_PATH}. Ranks will not be displayed.")
     COUNTRY_RANKS = {}
 
-# Country rankings mapping
-COUNTRY_RANKS = {
-    "Indonesia": 1,
-    "Brazil": 2,
-    "India": 3,
-    "Philippines": 4,
-    "United Kingdom": 5,
-    "France": 6,
-    "Turkey": 7,
-    "Hong Kong": 8,
-    "Chile": 9,
-    "Japan": 10,
-    "Malaysia": 11,
-    "Poland": 12,
-    "Singapore": 13,
-    "Thailand": 14,
-    "China": 14,
-    "South Korea": 16,
-    "Mexico": 17,
-    "United States": 18,
-    "Australia": 19,
-    "Colombia": 20,
-    "Italy": 21,
-    "Spain": 22,
-    "Greece": 22,
-    "South Africa": 24,
-    "Norway": 25,
-    "Ireland": 26,
-    "New Zealand": 27,
-    "Denmark": 28,
-    "Germany": 29,
-    "Canada": 30,
-    "Belgium": 31,
-    "Finland": 32,
-    "Taiwan": 32,
-    "Sweden": 34,
-    "Peru": 35,
-    "Netherlands": 36,
-    "Switzerland": 37,
-    "Austria": 38
-}
+# # Country rankings mapping
+# COUNTRY_RANKS = {
+#     "Indonesia": 1,
+#     "Brazil": 2,
+#     "India": 3,
+#     "Philippines": 4,
+#     "United Kingdom": 5,
+#     "France": 6,
+#     "Turkey": 7,
+#     "Hong Kong": 8,
+#     "Chile": 9,
+#     "Japan": 10,
+#     "Malaysia": 11,
+#     "Poland": 12,
+#     "Singapore": 13,
+#     "Thailand": 14,
+#     "China": 14,
+#     "South Korea": 16,
+#     "Mexico": 17,
+#     "United States": 18,
+#     "Australia": 19,
+#     "Colombia": 20,
+#     "Italy": 21,
+#     "Spain": 22,
+#     "Greece": 22,
+#     "South Africa": 24,
+#     "Norway": 25,
+#     "Ireland": 26,
+#     "New Zealand": 27,
+#     "Denmark": 28,
+#     "Germany": 29,
+#     "Canada": 30,
+#     "Belgium": 31,
+#     "Finland": 32,
+#     "Taiwan": 32,
+#     "Sweden": 34,
+#     "Peru": 35,
+#     "Netherlands": 36,
+#     "Switzerland": 37,
+#     "Austria": 38
+# }
 
 # Create ticker-to-country mapping for rank lookup
 TICKER_TO_COUNTRY = {}
@@ -298,23 +298,46 @@ if st.button('Refresh Dashboard'):
 
                 st.subheader(group_name)
 
-# --- NEW Heatmap Logic (Auto-scaled per column, centered at 0) ---
+# --- NEW Logic: Red for Negative, Green for Positive (No Imports) ---
+                def style_performance(val, col_max):
+                    if pd.isna(val) or col_max == 0:
+                        return ''
+                    
+                    # Calculate intensity (0.0 to 1.0) based on the column's max value
+                    intensity = min(abs(val) / col_max, 1.0)
+                    # Set a minimum visibility (0.1) so small numbers aren't invisible
+                    alpha = 0.1 + (intensity * 0.7) 
+                    
+                    if val < 0:
+                        # Soft Red for negative
+                        return f'background-color: rgba(255, 75, 75, {alpha});'
+                    else:
+                        # Soft Green for positive (Yellow-ish Green at low values)
+                        return f'background-color: rgba(0, 128, 0, {alpha});'
+
                 styled_df = display_df.style
-                
                 for col in heat_cols:
-                    # Find the highest absolute percentage in this column to create bounds
-                    col_max = display_df[col].abs().max()
+                    c_max = display_df[col].abs().max()
+                    # Apply the custom color function to each column
+                    styled_df = styled_df.map(style_performance, col_max=c_max, subset=[col])
+
+# # --- NEW Heatmap Logic (Auto-scaled per column, centered at 0) ---
+#                 styled_df = display_df.style
+                
+#                 for col in heat_cols:
+#                     # Find the highest absolute percentage in this column to create bounds
+#                     col_max = display_df[col].abs().max()
                     
-                    # Ensure limit is valid (prevents errors if a column is empty or all 0s)
-                    limit = col_max if pd.notna(col_max) and col_max > 0 else 1
+#                     # Ensure limit is valid (prevents errors if a column is empty or all 0s)
+#                     limit = col_max if pd.notna(col_max) and col_max > 0 else 1
                     
-                    # Apply gradient column-by-column with symmetric bounds (-limit to +limit)
-                    styled_df = styled_df.background_gradient(
-                        cmap='RdYlGn', 
-                        subset=[col], 
-                        vmin=-limit, 
-                        vmax=limit
-                    )
+#                     # Apply gradient column-by-column with symmetric bounds (-limit to +limit)
+#                     styled_df = styled_df.background_gradient(
+#                         cmap='RdYlGn', 
+#                         subset=[col], 
+#                         vmin=-limit, 
+#                         vmax=limit
+#                     )
 
                 # Render with sorting and symbol formatting
                 col_config = {
