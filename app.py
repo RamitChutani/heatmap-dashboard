@@ -77,7 +77,8 @@ GROUPS = {
 def get_performance(ticker, description, selected_date, ticker_rank):
     try:
         start_date = datetime(selected_date.year - 1, 1, 1) - timedelta(days=45)
-        df = yf.download(ticker, start=start_date, end=selected_date + timedelta(days=1), 
+        # Using end=None or a date in the future ensures yfinance pulls the latest live price
+        df = yf.download(ticker, start=start_date, end=selected_dt + timedelta(days=1), 
                          interval='1d', progress=False, auto_adjust=True)
         
         if df.empty:
@@ -126,9 +127,16 @@ st.set_page_config(page_title="Market Heatmap", layout="wide")
 st.title("Market Performance Heatmap")
 
 EXCEL_FILE_PATH = "etf_dash_May_06.xlsx" 
-default_date = datetime.now() - timedelta(days=2)
-selected_date = st.date_input("Select 'As Of' Date:", value=default_date, max_value=default_date)
-selected_dt = datetime.combine(selected_date, datetime.min.time())
+
+#default to right now (today) to capture live/latest data
+today = datetime.now()
+selected_date = st.date_input("Select 'As Of' Date:", value=today)
+
+# Use the current time if the user picks today, otherwise start of day for past dates
+if selected_date == today.date():
+    selected_dt = today
+else:    
+    selected_dt = datetime.combine(selected_date, datetime.min.time())
 
 # 4. RENDER LOOP
 if st.button('Refresh Dashboard'):
